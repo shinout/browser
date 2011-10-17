@@ -1,6 +1,6 @@
 {
   "name": "browser"
-, "version": "0.1.0"
+, "version": "0.1.1"
 , "description": "browsing urls with cookies, that is, we can scrape with authenticated pages!"
 , "tags": ["scraping", "browse", "url", "cookie", "crawling", "login", "sign-in"]
 , "author": "SHIN Suzuki <shinout310@gmail.com>"
@@ -18,6 +18,6 @@
 , "dependencies": 
   { "junjo": "0.1.0"
   , "termcolor" : "0.1.1"
-  , "u2r" : "0.1.2"
+  , "u2r" : "0.1.3"
   }
 }

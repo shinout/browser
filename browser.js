@@ -250,7 +250,7 @@ jbrowser.prototype.browse = function() {
     this.$.cookieManager.set(url, out.cookies);
 
     // if redirect flag, rebrowse
-    if (out.location) {
+    if (out.location && !options.noredirect) {
       if (debug) console.eyellow("redirected to ", out.location);
       console.ered("original text", out.text);
       var $jb = new jbrowser();

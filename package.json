@@ -1,0 +1,23 @@
+{
+  "name": "browser"
+, "version": "0.1.0"
+, "description": "browsing urls with cookies, that is, we can scrape with authenticated pages!"
+, "tags": ["scraping", "browse", "url", "cookie", "crawling", "login", "sign-in"]
+, "author": "SHIN Suzuki <shinout310@gmail.com>"
+, "repository": 
+  { "type": "git"
+  ,  "url": "https://github.com/shinout/browser.git"
+  }
+, "bugs": {"url": "https://github.com/shinout/browser/issues" }
+, "licences": 
+  [ { "type": "MIT"
+    , "url": "https://github.com/shinout/browser/raw/master/LICENCE"
+    }
+  ]
+, "main": "./browser.js"
+, "dependencies": 
+  { "junjo": "0.1.0"
+  , "termcolor" : "0.1.1"
+  , "u2r" : "0.1.2"
+  }
+}

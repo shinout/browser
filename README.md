@@ -32,7 +32,7 @@ browse
      *) { return url or return [url, options] }
      */
     $b.browse(function(err, out) {
-      var window = jsdom(out.text).createWindow();
+      var window = jsdom(out.result).createWindow();
       var $ = jquery.create(window);
       var postdata = {
         Email  : userdata.email,
@@ -57,13 +57,13 @@ browse
 
     /* running on end of all browsings
      *   err: error object or null
-     *   out: { text: result body, ...}
+     *   out: { result : result body, ...}
      */
     $b.on("end", function(err, out) {
-      if (!out || !out.text) return res.end("no result");
+      if (!out || !out.result) return res.end("no result");
       res.writeHead(200, {'Content-Type' : 'text/html'});
-      console.log("result", out.text);
-      res.end(out.text);
+      console.log("result", out.result);
+      res.end(out.result);
     });
     $b.run();
 
@@ -85,7 +85,7 @@ The following are common options.
  - body : querystring format of options.data
 
 #### keys of out object ####
- - text: response text
+ - result : response data(Buffer or String)
  - statusCode
  - location
  - responseHeaders

@@ -3,6 +3,7 @@ var Junjo = require('junjo');
 var spawn = require('child_process').spawn;
 var cl    = require('termcolor').define();
 var CookieManager = require('./CookieManager');
+require('./buffer-concat');
 
 var debug = true;
 
@@ -98,18 +99,21 @@ var browse = (function() {
     if ([301, 302].indexOf(res.statusCode) >= 0) {
       this.out.location = res.headers.location;
       /*
-      this.out.text = '';
+      this.out.result = '';
       this.terminate();
       */
     }
   });
 
 
-  $j('charset', function(contentType) {
+  $j('contentType', function(contentType) {
+    var vals = contentType.split("; charset=");
+    contentType = vals[0];
+    var charset = vals[1] || "binary";
     if (typeof contentType != 'string' || !contentType) {
       return 'utf-8';
     }
-    return contentType.split('charset=')[1].toLowerCase();
+    return Junjo.multi(contentType, charset);
   })
   .failSafe('utf-8')
   .pre(function(res) {
@@ -118,26 +122,43 @@ var browse = (function() {
   .after('request');
 
 
-  $j('iconv', function(res, charset) {
+  $j('resultStream', function(res, contentType, charset) {
     var stream;
-
-    if (charset.split(/[-_]/).join('') == 'utf8') {
+    if (charset == "binary") {
       stream = res;
+
+      this.absorb(stream, 'data', function(data, result) {
+        return (result) ? Buffer.concat(result, data) : data;
+      });
     }
     else {
-      if (debug) console.eyellow("converting charset", charset, "to utf-8");
-      var iconv = spawn('iconv', ['-f', charset, '-t', 'utf-8']);
-      res.pipe(iconv.stdin);
-      stream = iconv.stdout;
+      if (charset.toLowerCase().split(/[-_]/).join('') == 'utf8') {
+        stream = res;
+      }
+      else {
+        if (debug) console.eyellow("converting charset", charset, "to utf-8");
+        var iconv = spawn('iconv', ['-f', charset, '-t', 'utf-8']);
+        res.pipe(iconv.stdin);
+        stream = iconv.stdout;
+      }
+      stream.setEncoding("utf8");
+    
+      this.absorb(res, 'data', function(data, result) {
+        return (result) ? result + data : data;
+      });
+      this.length = res.headers['content-length'];
     }
-
-    this.absorbData(stream);
   })
   .post(function(err, out) {
-    this.out['text'] = out;
+    var len = out.length;
+    if (this.length && this.length != len) {
+      console.ered("content-length in header (", this.length, ") and the actual length (", len, ") don't match");
+    }
+    this.out['result'] = out;
+
   })
   .err()
-  .after('request', 'charset');
+  .after('request', 'contentType');
 
 
   return function browse(url, options, callback) {
@@ -252,7 +273,7 @@ jbrowser.prototype.browse = function() {
     // if redirect flag, rebrowse
     if (out.location && !options.noredirect) {
       if (debug) console.eyellow("redirected to ", out.location);
-      console.ered("original text", out.text);
+      console.ered("original result", out.result);
       var $jb = new jbrowser();
       $jb.maxRedirect   = $b.maxRedirect;
       $jb.redirectCount = ++$b.redirectCount;

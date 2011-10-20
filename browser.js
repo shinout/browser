@@ -3,6 +3,9 @@ var Junjo = require('junjo');
 var spawn = require('child_process').spawn;
 var cl    = require('termcolor').define();
 var CookieManager = require('./CookieManager');
+var jsdom = require("jsdom").jsdom;
+var jquery = require("jquery");
+
 require('./buffer-concat');
 
 const userAgents = {
@@ -154,7 +157,7 @@ var browse = (function() {
   .eshift()
   .post(function(out) {
     var len = out.length;
-    if (this.length && this.length != len) {
+    if (this.$.debug && this.length && this.length != len) {
       console.ered("content-length in header (", this.length, ") and the actual length (", len, ") don't match");
     }
     this.out['result'] = out;
@@ -191,6 +194,51 @@ var jbrowser = (function() {
     return $ret.exec(callback);
   };
 })();
+
+/**
+ * options
+ *   (string) selector : css selector of the form to use, required.
+ *   (string) from     : url of contents which contains the form to use, optional.
+ *   (string) to       : url to submit, optional, default <form action="THIS VALUE">
+ *   (object) data     : values to submit, optional, default {}.
+ *   (string) method   : default POST
+ *
+ *   besides above, usual options for browsing are available such as debug, cookie, ua etc...
+ **/
+jbrowser.prototype.submit = function() {
+  var label = (arguments.length > 1) ? Array.prototype.shift.call(arguments) : undefined;
+  var options = arguments[0];
+  if (!options || typeof options != "object") throw new Error("browser#submit: options must be object.");
+  if (typeof options.selector != "string") throw new Error("browser#submit: css selector is required.");
+  var $b = this;
+  var ret;
+  if (typeof options.from == "string") ret = $b.browse(options.from);
+  delete options.from;
+  var formSubmit = $b.browse(label, function(err, out) {
+    options.data || (options.data = {});
+    var selector = options.selector;
+    var window = jsdom(out.result).createWindow();
+    var $ = jquery.create(window), $form = $(selector);
+    var url = options.to || $form.attr("action") || out.url;
+    if (url.indexOf('/') == 0) {
+      if (!out.url) throw new Error('No domain is specified in form ', selector);
+      url = u2r(out.url).host + url;
+    }
+    delete options.to, options.selector;
+
+    $form.find("input").each(function(k, el) {
+      var $el = $(el);
+      var name = $el.attr("name"), type = $el.attr("type"), val = $el.val();
+      if (type == "hidden" || type == "submit") {
+        if (options.data[name] === undefined) options.data[name] = val;
+      }
+    });
+    options.method = options.method || 'POST';
+    return Junjo.multi(url, options);
+  });
+  if (ret) formSubmit.after();
+  return ret || formSubmit;
+};
 
 jbrowser.prototype.browse = function() {
   var count = ++this.count;
@@ -273,8 +321,10 @@ jbrowser.prototype.browse = function() {
 
     // if redirect flag, rebrowse
     if (out.location && !options.noredirect) {
-      if (this.$.debug) console.eyellow("redirected to ", out.location);
-      console.ered("original result", out.result);
+      if (this.$.debug) {
+        console.eyellow("redirected to ", out.location);
+        console.ered("original result", out.result);
+      }
       var $jb = new jbrowser();
       $jb.maxRedirect   = $b.maxRedirect;
       $jb.redirectCount = ++$b.redirectCount;

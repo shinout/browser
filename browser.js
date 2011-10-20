@@ -120,23 +120,22 @@ var browse = (function() {
     }
     return Junjo.multi(contentType, charset);
   })
-  .failSafe('utf-8')
+  .failSafe('', 'binary')
   .pre(function(res) {
     return res.headers['content-type'];
   })
   .after('request');
 
 
-  $j('resultStream', function(res, contentType, charset) {
+  $j('resultStream', function(res, contentType, charset, options) {
+    charset = options.charset || charset;
     var stream;
     if (charset == "binary") {
       stream = res;
 
-      this.absorb(stream, 'data', function(data, result) {
-        return (result) ? Buffer.concat(result, data) : data;
-      });
     }
     else {
+      this.text = true;
       if (charset.toLowerCase().split(/[-_]/).join('') == 'utf8') {
         stream = res;
       }
@@ -146,13 +145,11 @@ var browse = (function() {
         res.pipe(iconv.stdin);
         stream = iconv.stdout;
       }
-      stream.setEncoding("utf8");
-    
-      this.absorb(res, 'data', function(data, result) {
-        return (result) ? result + data : data;
-      });
       this.length = res.headers['content-length'];
     }
+    this.absorb(stream, 'data', function(data, result) {
+      return (result) ? Buffer.concat(result, data) : data;
+    });
   })
   .eshift()
   .post(function(out) {
@@ -161,10 +158,10 @@ var browse = (function() {
     if (this.$.debug && this.length && this.length != len) {
       console.ered("content-length in header (", this.length, ") and the actual length (", len, ") don't match");
     }
-    this.out['result'] = out;
+    this.out['result'] = (this.text) ? out.toString() : out;
 
   })
-  .after('request', 'contentType');
+  .after('request', 'contentType', 'options');
 
   return function browse(url, options, callback) {
     return (url) ? $j.clone().exec(url, options, callback) : $j.clone();

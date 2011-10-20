@@ -5,36 +5,35 @@ var cl    = require('termcolor').define();
 var CookieManager = require('./CookieManager');
 require('./buffer-concat');
 
-var debug = true;
-
 const userAgents = {
   'firefox' : 'Mozilla/5.0 (Macintosh; U; Intel Mac OS X 10.6; ja-JP-mac; rv:1.9.2.16) Gecko/20110319 Firefox/3.6.16',
 };
 Object.freeze(userAgents);
 
 const defaultHeader = {
-  'User-Agent': 'node.js/' + process.version + ' ('+ process.platform +') http.clientRequest',
-  'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-  'Accept-Language': 'ja,en-us;q=0.7,en;q=0.3',
-  'Accept-Charset': 'Shift_JIS,utf-8;q=0.7,*;q=0.7',
-  'Keep-Alive': 120,
-  'Connection': 'keep-alive',
-  //'Accept-Encoding': 'gzip,deflate',
+  'User-Agent'      : 'node.js/' + process.version + ' ('+ process.platform +') http.clientRequest',
+  'Accept'          : 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+  'Accept-Language' : 'ja,en-us;q=0.7,en;q=0.3',
+  'Accept-Charset'  : 'Shift_JIS,utf-8;q=0.7,*;q=0.7',
+  'Keep-Alive'      : 120,
+  'Connection'      : 'keep-alive',
+  //'Accept-Encoding' : 'gzip,deflate',
 };
 Object.freeze(defaultHeader);
 
 
 var browse = (function() {
 
-  var $j = new Junjo({result: true});
-  $j.noTimeout();
+  var $j = new Junjo().noTimeout();
 
   $j.inputs({
     url     : 0,
-    options : 1,
-    debug   : 2
+    options : 1
   });
 
+  $j.start(function(url, options) {
+    this.$.debug = options.debug;
+  });
 
   $j('header', function(options) {
     options || (options = {});
@@ -50,7 +49,7 @@ var browse = (function() {
     if (options.ua && userAgents[options.ua]) {
       header["User-Agent"] = userAgents[options.ua];
     }
-    //if (debug && options.cookie) console.ecyan("using cookie", options.cookie);
+    //if (this.$.debug && options.cookie) console.ecyan("using cookie", options.cookie);
     return header;
   })
   .after('options');
@@ -63,7 +62,7 @@ var browse = (function() {
       header["Content-Length"] = ops.body.length;
     }
 
-    if (debug) {
+    if (this.$.debug) {
       console.egreen("-----REQUEST INFORMATION -----------");
       console.egreen("access to ", url);
       console.egreen("options", ops);
@@ -83,9 +82,13 @@ var browse = (function() {
     req.end();
     this.out.url = url;
   })
+  .fail(function(e) {
+    this.err = e;
+    this.terminate();
+  })
   .after('url', 'header', 'options')
   .post(function(res) {
-    if (debug) {
+    if (this.$.debug) {
       console.ecyan("-----RESPONSE INFORMATION -----------");
       console.ecyan("statusCode", res.statusCode);
       console.ecyan("header", res.headers);
@@ -104,7 +107,6 @@ var browse = (function() {
       */
     }
   });
-
 
   $j('contentType', function(contentType) {
     var vals = contentType.split("; charset=");
@@ -136,7 +138,7 @@ var browse = (function() {
         stream = res;
       }
       else {
-        if (debug) console.eyellow("converting charset", charset, "to utf-8");
+        if (this.$.debug) console.eyellow("converting charset", charset, "to utf-8");
         var iconv = spawn('iconv', ['-f', charset, '-t', 'utf-8']);
         res.pipe(iconv.stdin);
         stream = iconv.stdout;
@@ -149,7 +151,8 @@ var browse = (function() {
       this.length = res.headers['content-length'];
     }
   })
-  .post(function(err, out) {
+  .eshift()
+  .post(function(out) {
     var len = out.length;
     if (this.length && this.length != len) {
       console.ered("content-length in header (", this.length, ") and the actual length (", len, ") don't match");
@@ -157,13 +160,11 @@ var browse = (function() {
     this.out['result'] = out;
 
   })
-  .err()
   .after('request', 'contentType');
-
 
   return function browse(url, options, callback) {
     return (url) ? $j.clone().exec(url, options, callback) : $j.clone();
-  }
+  };
 })();
 
 var jbrowser = (function() {
@@ -200,7 +201,6 @@ jbrowser.prototype.browse = function() {
     : "response" + count;
   var hostlbl = "host" + count;
   var $b = this;
-
 
   // getting url and option from previous callback
   if (arguments.length == 0) {
@@ -242,19 +242,20 @@ jbrowser.prototype.browse = function() {
   // setting request cookie, referer, userAgent
   this.register("request_cookie" + count, function(url, options, host) {
     if ($b.redirectCount > $b.maxRedirect) throw new Error("redirect count exceeded");
-    if (debug) console.yellow("redirect count", $b.redirectCount, "/", $b.maxRedirect);
+    this.$.debug = options.debug;
+    if (this.$.debug) console.eyellow("redirect count", $b.redirectCount, "/", $b.maxRedirect);
 
     options.cookie = this.$.cookieManager.get(url);
-    if (debug) console.yellow("cookie", options.cookie);
+    if (this.$.debug) console.eyellow("cookie", options.cookie);
 
     options.ua = options.ua || this.results("agent");
-    if (debug) console.eyellow("userAgent", options.ua || "(node.js default)");
+    if (this.$.debug) console.eyellow("userAgent", options.ua || "(node.js default)");
 
     if (this.$.referer) {
       options.referer = this.$.referer;
     }
     this.$.referer = options.referer;
-    if (debug) console.eyellow("referer", this.$.referer || "(null)");
+    if (this.$.debug) console.eyellow("referer", this.$.referer || "(null)");
     
     return Junjo.multi(url, options);
   })
@@ -272,14 +273,15 @@ jbrowser.prototype.browse = function() {
 
     // if redirect flag, rebrowse
     if (out.location && !options.noredirect) {
-      if (debug) console.eyellow("redirected to ", out.location);
+      if (this.$.debug) console.eyellow("redirected to ", out.location);
       console.ered("original result", out.result);
       var $jb = new jbrowser();
       $jb.maxRedirect   = $b.maxRedirect;
       $jb.redirectCount = ++$b.redirectCount;
       $jb.browse(out.location, {
-        ua            : options.ua,
-        referer       : this.$.referer
+        ua      : options.ua,
+        referer : this.$.referer,
+        debug   : this.$.debug
       });
       $jb.exec(this.$.cookieManager, this.cb);
       this.noreferer = options.noreferer;
@@ -288,7 +290,6 @@ jbrowser.prototype.browse = function() {
 
     return Junjo.args(err, out);
   })
-  .firstError()
   .errout()
   .post(function(err, out) {
     if (!this.noreferer) this.$.referer = out.url;
@@ -300,3 +301,12 @@ jbrowser.prototype.browse = function() {
 
 module.exports = jbrowser;
 module.exports.Junjo = Junjo;
+module.exports.browse = function() {
+  var url = Array.prototype.shift.call(arguments);
+  var cb  = Array.prototype.pop.call(arguments);
+  var $b = new jbrowser().noTimeout();
+  $b.browse(url, arguments[0]);
+  if (typeof cb != "function") cb = function() {};
+  $b.exec(cb);
+  return $b;
+};

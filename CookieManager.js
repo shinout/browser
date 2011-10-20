@@ -6,6 +6,7 @@ function CookieManager() {
 }
 
 CookieManager.prototype.set = function(url, cookies) {
+  if (!Array.isArray(cookies)) return this;
   var domain = getDomain.call(this, u2r(url).host);
 
   // parsing cookie

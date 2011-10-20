@@ -1,4 +1,4 @@
-browse
+browser
 ==========
 [Node.js] browsing urls with cookies, that is, we can scrape with authenticated pages!
 
@@ -9,9 +9,20 @@ browse
 
     npm install browser 
 
+### Features ###
+ - automatic cookie management
+ - easy asynchronous handling with <a href="https://github.com/shinout/Junjo.js">Junjo.js</a>
+
 ### Usage ###
-#### helloworld ####
-    var $b = require("browser");
+#### helloworld (onetime access) ####
+    var browser = require("browser");
+    browser.browse("shinout.net", function(err, out) {
+      console.log(out.result);
+    });
+
+#### helloworld2 (using object) ####
+    var browser = require("browser");
+    var $b = new browser();
     $b.browse('https://accounts.google.com/Login'); // browse this url
     $b.run(); // execution
 
@@ -21,7 +32,21 @@ browse
       pass : "XXXXXXXX"
     };
 
-    var $b = new jbrowser();
+    var $b = new browser();
+    $b.submit({
+      from : 'https://accounts.google.com/Login',
+      selector: "#gaia_loginform",
+      data : {
+        Email  : userdata.email,
+        Passwd : userdata.pass
+      }
+    });
+
+    // authenticated access
+    $b.browse('https://mail.google.com/mail/u/0/?ui=html&zy=d')
+    .after(); // browse after previously registered function
+
+#### login sample2 (do what $b.submit() is doing manually) ####
 
     // $b.browse(the label of this request, url to access)
     $b.browse('login', 'https://accounts.google.com/Login');
@@ -91,3 +116,6 @@ The following are common options.
  - responseHeaders
  - cookies : set-cookie headers
  - url : browsed url
+
+### Contact ###
+Feel free to contact <a href="twitter.com/shinout">@shinout</a>!

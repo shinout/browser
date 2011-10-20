@@ -156,6 +156,7 @@ var browse = (function() {
   })
   .eshift()
   .post(function(out) {
+    if (!out) out = "";
     var len = out.length;
     if (this.$.debug && this.length && this.length != len) {
       console.ered("content-length in header (", this.length, ") and the actual length (", len, ") don't match");

@@ -24,6 +24,14 @@ browser
     var browser = require("browser");
     var $b = new browser();
     $b.browse('https://accounts.google.com/Login'); // browse this url
+
+    /* running on end of all browsings
+     *   err: error object or null
+     *   out: { result : result body, ...}
+     */
+    $b.on("end", function(err, out) {
+      console.log(out.url, out.result, out.responseHeaders);
+    });
     $b.run(); // execution
 
 #### login sample (requires jquery) ####
@@ -45,6 +53,14 @@ browser
     // authenticated access
     $b.browse('https://mail.google.com/mail/u/0/?ui=html&zy=d')
     .after(); // browse after previously registered function
+
+    /* running on end of all browsings
+     *   err: error object or null
+     *   out: { result : result body, ...}
+     */
+    $b.on("end", function(err, out) {
+      console.log(out.url, out.result, out.responseHeaders);
+    });
 
 #### login sample2 (do what $b.submit() is doing manually) ####
 

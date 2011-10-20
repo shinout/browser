@@ -323,7 +323,7 @@ jbrowser.prototype.browse = function() {
     if (out.location && !options.noredirect) {
       if (this.$.debug) {
         console.eyellow("redirected to ", out.location);
-        console.ered("original result", out.result);
+        console.eyellow("original result", out.result);
       }
       var $jb = new jbrowser();
       $jb.maxRedirect   = $b.maxRedirect;

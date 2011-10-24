@@ -1,6 +1,6 @@
 {
   "name": "browser"
-, "version": "0.2.2"
+, "version": "0.2.3"
 , "description": "browsing urls with cookies, that is, we can scrape with authenticated pages!"
 , "tags": ["scraping", "browse", "url", "cookie", "crawling", "login", "sign-in"]
 , "author": "SHIN Suzuki <shinout310@gmail.com>"

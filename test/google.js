@@ -10,11 +10,13 @@ $b.submit({
     Email  : userdata.u,
     Passwd : userdata.p,
     PersistentCookie : "yes"
-  }
+  },
+  debug    : true
 });
 $b.browse('https://mail.google.com/mail/u/0/?ui=html&zy=d').after();
 
 $b.on("end", function(err, out) {
+  console.log(out.result);
   T.ok(out.result.match("logout"), "has logined");
 });
 

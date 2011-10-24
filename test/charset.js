@@ -6,7 +6,6 @@ var s = new S(__dirname + '/data', {
   html: "text/html"
 });
 
-
 var server = http.createServer(function(req, res) {
   s.host(req, res, function(err, result) {
   });
@@ -17,7 +16,6 @@ var eucURL = "localhost:12345/euc-jp.html"
 var utfURL = "localhost:12345/utf8.html"
 
 $b = new browser();
-
 $b.browse("euc", eucURL, {charset: "euc-jp"});
 
 $b.browse("utf", utfURL, {charset: "utf-8"});

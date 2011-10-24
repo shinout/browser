@@ -27,18 +27,18 @@ Object.freeze(defaultHeader);
 
 var browse = (function() {
 
-  var $j = new Junjo().noTimeout();
+  var $J = new Junjo.Template({noTimeout : true});
 
-  $j.inputs({
+  $J.inputs({
     url     : 0,
     options : 1
   });
 
-  $j.start(function(url, options) {
+  $J.start(function(url, options) {
     this.$.debug = options.debug;
   });
 
-  $j('header', function(options) {
+  $J('header', function(options) {
     options || (options = {});
     var header = (!options || !options.header) ? {} : options.header;
 
@@ -58,7 +58,7 @@ var browse = (function() {
   .after('options');
 
 
-  $j('request', function(url, header, options) {
+  $J('request', function(url, header, options) {
     var ops = u2r(url, options);
     if (ops.method == "POST") {
       header["Content-Type"]  = "application/x-www-form-urlencoded";
@@ -111,7 +111,7 @@ var browse = (function() {
     }
   });
 
-  $j('contentType', function(contentType) {
+  $J('contentType', function(contentType) {
     var vals = contentType.split("; charset=");
     contentType = vals[0];
     var charset = vals[1] || "binary";
@@ -127,7 +127,7 @@ var browse = (function() {
   .after('request');
 
 
-  $j('resultStream', function(res, contentType, charset, options) {
+  $J('resultStream', function(res, contentType, charset, options) {
     charset = options.charset || charset;
     var stream;
     if (charset == "binary") {
@@ -159,35 +159,34 @@ var browse = (function() {
       console.ered("content-length in header (", this.length, ") and the actual length (", len, ") don't match");
     }
     this.out['result'] = (this.text) ? out.toString() : out;
-
   })
   .after('request', 'contentType', 'options');
 
   return function browse(url, options, callback) {
-    return (url) ? $j.clone().exec(url, options, callback) : $j.clone();
+    return (url) ? new $J().exec(url, options, callback) : new $J();
   };
 })();
 
-var jbrowser = (function() {
-  var $b = new Junjo();
-  $b.start(function(cookieManager) {
+var browser = (function() {
+  var $B = new Junjo.Template();
+  $B.start(function(cookieManager) {
     this.$.cookieManager= cookieManager || new CookieManager();
   });
-  $b("agent", function() { return "" });
+  $B("agent", function() { return "" });
 
-  return function jbrowser(url, options, callback) {
-    var $ret = $b.clone();
+  return function browser(url, options, callback) {
+    var $ret = new ($B.clone());
     options || (options = {});
-    Object.keys(jbrowser.prototype).forEach(function(name) {
-      $ret[name] = jbrowser.prototype[name];
+    Object.keys(browser.prototype).forEach(function(name) {
+      $ret[name] = browser.prototype[name];
     });
-    $ret.noTimeout();
+    $ret.noTimeout(true);
     $ret.count = 0;
     var mR = parseInt(options.maxRedirect), rC = parseInt(options.redirectCount);
     $ret.maxRedirect  = !isNaN(mR) ? mR : 10;
     $ret.redirectCount= !isNaN(rC) ? rC : 0;
 
-    if (this instanceof jbrowser) return $ret;
+    if (this instanceof browser) return $ret;
     $ret.browse(url, options);
     return $ret.exec(callback);
   };
@@ -203,7 +202,7 @@ var jbrowser = (function() {
  *
  *   besides above, usual options for browsing are available such as debug, cookie, ua etc...
  **/
-jbrowser.prototype.submit = function() {
+browser.prototype.submit = function() {
   var label = (arguments.length > 1) ? Array.prototype.shift.call(arguments) : undefined;
   var options = arguments[0];
   if (!options || typeof options != "object") throw new Error("browser#submit: options must be object.");
@@ -238,7 +237,7 @@ jbrowser.prototype.submit = function() {
   return ret || formSubmit;
 };
 
-jbrowser.prototype.browse = function() {
+browser.prototype.browse = function() {
   var count = ++this.count;
   var firstlbl = "url_options" + count;
   var firstfn, host; // values to register
@@ -323,7 +322,7 @@ jbrowser.prototype.browse = function() {
         console.eyellow("redirected to ", out.location);
         console.eyellow("original result", out.result);
       }
-      var $jb = new jbrowser();
+      var $jb = new browser();
       $jb.maxRedirect   = $b.maxRedirect;
       $jb.redirectCount = ++$b.redirectCount;
       $jb.browse(out.location, {
@@ -347,12 +346,12 @@ jbrowser.prototype.browse = function() {
   return ret;
 };
 
-module.exports = jbrowser;
+module.exports = browser;
 module.exports.Junjo = Junjo;
 module.exports.browse = function() {
   var url = Array.prototype.shift.call(arguments);
   var cb  = Array.prototype.pop.call(arguments);
-  var $b = new jbrowser().noTimeout();
+  var $b = new browser().noTimeout(true);
   $b.browse(url, arguments[0]);
   if (typeof cb != "function") cb = function() {};
   $b.exec(cb);

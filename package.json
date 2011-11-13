@@ -16,7 +16,7 @@
   ]
 , "main": "./browser.js"
 , "dependencies": 
-  { "junjo": ">=0.2.0"
+  { "junjo": ">=0.2.6"
   , "termcolor" : "x.x.x"
   , "u2r" : "x.x.x"
   , "jquery" : "x.x.x"

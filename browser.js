@@ -27,7 +27,7 @@ Object.freeze(defaultHeader);
 
 var browse = (function() {
 
-  var $J = new Junjo.Template({noTimeout : true});
+  var $J = new Junjo.Template({noTimeout : true, destroy: true});
 
   $J.inputs({
     url     : 0,
@@ -167,30 +167,34 @@ var browse = (function() {
   };
 })();
 
-var browser = (function() {
-  var $B = new Junjo.Template();
-  $B.start(function(cookieManager) {
+var browser = function browser(url, options, callback) {
+
+  var $ret = new Junjo({clear: true, destroy: true});
+
+  $ret.start(function(cookieManager) {
     this.$.cookieManager= cookieManager || new CookieManager();
   });
-  $B("agent", function() { return "" });
 
-  return function browser(url, options, callback) {
-    var $ret = new ($B.clone());
-    options || (options = {});
-    Object.keys(browser.prototype).forEach(function(name) {
-      $ret[name] = browser.prototype[name];
-    });
-    $ret.noTimeout(true);
-    $ret.count = 0;
-    var mR = parseInt(options.maxRedirect), rC = parseInt(options.redirectCount);
-    $ret.maxRedirect  = !isNaN(mR) ? mR : 10;
-    $ret.redirectCount= !isNaN(rC) ? rC : 0;
+  $ret("agent", function() { return "" });
 
-    if (this instanceof browser) return $ret;
-    $ret.browse(url, options);
-    return $ret.exec(callback);
-  };
-})();
+  options || (options = {});
+
+  Object.keys(browser.prototype).forEach(function(name) {
+    $ret[name] = browser.prototype[name];
+  });
+
+  $ret.noTimeout(true);
+  $ret.count = 0;
+
+  var mR = parseInt(options.maxRedirect);
+  var rC = parseInt(options.redirectCount);
+  $ret.maxRedirect  = !isNaN(mR) ? mR : 10;
+  $ret.redirectCount= !isNaN(rC) ? rC : 0;
+
+  if (this instanceof browser) return $ret;
+  $ret.browse(url, options);
+  return $ret.exec(callback);
+};
 
 /**
  * options
@@ -279,10 +283,19 @@ browser.prototype.browse = function() {
     }
     if (!options) options = {};
     return Junjo.multi(url, options);
+  })
+  .fail(function(e) {
+    this.err = e;
+    console.red(e.message);
+    this.terminate();
   });
 
   // getting host
-  this.register(hostlbl, host).after(firstlbl);
+  this.register(hostlbl, host).after(firstlbl)
+  .fail(function(e) {
+    this.err = e;
+    this.terminate();
+  });
 
   // setting request cookie, referer, userAgent
   this.register("request_cookie" + count, function(url, options, host) {
@@ -335,7 +348,7 @@ browser.prototype.browse = function() {
     }
     else $b.redirectCount = 0;
 
-    return Junjo.args(err, out);
+    return Junjo.multi(err, out);
   })
   .errout()
   .post(function(err, out) {
@@ -347,7 +360,9 @@ browser.prototype.browse = function() {
 };
 
 module.exports = browser;
+
 module.exports.Junjo = Junjo;
+
 module.exports.browse = function() {
   var url = Array.prototype.shift.call(arguments);
   var cb  = Array.prototype.pop.call(arguments);

@@ -63,9 +63,10 @@ browser
     });
 
 #### login sample2 (do what $b.submit() is doing manually) ####
-
+    var browser = require("browser");
+    var $b = new browser();
     // $b.browse(the label of this request, url to access)
-    $b.browse('login', 'https://accounts.google.com/Login');
+    $b.browse('login', 'https://accounts.google.com/Login', {debug: true});
 
     /* $b.browse(function(
      *   err : errors occured in the previous request, 
@@ -73,6 +74,8 @@ browser
      *) { return url or return [url, options] }
      */
     $b.browse(function(err, out) {
+      var jsdom = require("jsdom").jsdom;
+      var jquery = require("jquery");
       var window = jsdom(out.result).createWindow();
       var $ = jquery.create(window);
       var postdata = {
@@ -96,18 +99,10 @@ browser
     $b.browse('https://mail.google.com/mail/u/0/?ui=html&zy=d')
     .after(); // browse after previously registered function
 
-    /* running on end of all browsings
-     *   err: error object or null
-     *   out: { result : result body, ...}
-     */
     $b.on("end", function(err, out) {
-      if (!out || !out.result) return res.end("no result");
-      res.writeHead(200, {'Content-Type' : 'text/html'});
-      console.log("result", out.result);
-      res.end(out.result);
+      console.log(out.result);
     });
     $b.run();
-
 
 #### options object ####
 >option object to pass to $b.browse() is the same format as u2r options.

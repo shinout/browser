@@ -7,8 +7,8 @@ $b.submit({
   from     : 'https://accounts.google.com/Login',
   selector : "#gaia_loginform", 
   data     : {
-    Email  : userdata.u,
-    Passwd : userdata.p,
+    Email  : userdata.email,
+    Passwd : userdata.pass,
     PersistentCookie : "yes"
   },
   debug    : true

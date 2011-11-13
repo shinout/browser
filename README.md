@@ -63,6 +63,11 @@ browser
     });
 
 #### login sample2 (do what $b.submit() is doing manually) ####
+    var userdata = {
+      email: "XXXXXX@gmail.com",
+      pass : "XXXXXXXX"
+    };
+
     var browser = require("browser");
     var $b = new browser();
     // $b.browse(the label of this request, url to access)

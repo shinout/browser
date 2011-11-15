@@ -74,6 +74,8 @@ var browse = (function() {
     }
 
     var http = require(ops.protocol);
+    delete ops.protocol;
+
     var req = http.request(ops, this.cb);
     req.on('error', this.fail);
 

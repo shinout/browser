@@ -1,3 +1,4 @@
+[![build status](https://secure.travis-ci.org/shinout/browser.png)](http://travis-ci.org/shinout/browser)
 browser
 ==========
 [Node.js] browsing urls with cookies, that is, we can scrape with authenticated pages!

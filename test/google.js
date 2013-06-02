@@ -1,5 +1,5 @@
 var browser = require("browser");
-var T = require('./load.test');
+//var T = require('./load.test');
 var userdata = require('./accounts/google');
 
 var $b = new browser();
@@ -17,7 +17,7 @@ $b.browse('https://mail.google.com/mail/u/0/?ui=html&zy=d').after();
 
 $b.on("end", function(err, out) {
   console.log(out.result);
-  T.ok(out.result.match("logout"), "has logined");
+  //T.ok(out.result.match("logout"), "has logined");
 });
 
 $b.run();

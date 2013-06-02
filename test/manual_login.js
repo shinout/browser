@@ -11,10 +11,7 @@
      *) { return url or return [url, options] }
      */
     $b.browse(function(err, out) {
-      var jsdom = require("jsdom").jsdom;
-      var jquery = require("jquery");
-      var window = jsdom(out.result).createWindow();
-      var $ = jquery.create(window);
+      var $ = require("cheerio").load(out.result);
       var postdata = {
         Email  : userdata.email,
         Passwd : userdata.pass
@@ -23,7 +20,7 @@
       // get hidden fields, and register them to post data
       $("input").each(function(k, el) {
         var $el = $(el);
-        var name = $el.attr("name"), type = $el.attr("type"), val = $el.val();
+        var name = $el.attr("name"), type = $el.attr("type"), val = $el.attr("value");
         if (type == "hidden" || type == "submit") postdata[name] = val;
       });
       return [url, {

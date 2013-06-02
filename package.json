@@ -19,8 +19,7 @@
   { "junjo": ">=0.2.6"
   , "termcolor" : "x.x.x"
   , "u2r" : "x.x.x"
-  , "jquery" : "x.x.x"
-  , "jsdom" : "x.x.x"
+  , "cheerio" : "x.x.x"
   }
 , "engine" : "node >= 0.4.1"
 }

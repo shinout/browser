@@ -3,8 +3,6 @@ var Junjo = require('junjo');
 var spawn = require('child_process').spawn;
 var cl    = require('termcolor').define();
 var CookieManager = require('./CookieManager');
-var jsdom = require("jsdom").jsdom;
-var jquery = require("jquery");
 
 require('./buffer-concat');
 
@@ -220,8 +218,8 @@ browser.prototype.submit = function() {
   var formSubmit = $b.browse(label, function(err, out) {
     options.data || (options.data = {});
     var selector = options.selector;
-    var window = jsdom(out.result).createWindow();
-    var $ = jquery.create(window), $form = $(selector);
+    var $ = require("cheerio").load(out.result);
+    var $form = $(selector);
     var url = options.to || $form.attr("action") || out.url;
     if (url.indexOf('/') == 0) {
       if (!out.url) throw new Error('No domain is specified in form ', selector);
@@ -231,7 +229,7 @@ browser.prototype.submit = function() {
 
     $form.find("input").each(function(k, el) {
       var $el = $(el);
-      var name = $el.attr("name"), type = $el.attr("type"), val = $el.val();
+      var name = $el.attr("name"), type = $el.attr("type"), val = $el.attr("value");
       if (type == "hidden" || type == "submit") {
         if (options.data[name] === undefined) options.data[name] = val;
       }

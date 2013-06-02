@@ -171,8 +171,9 @@ var browser = function browser(url, options, callback) {
 
   var $ret = new Junjo({clear: true, destroy: true});
 
-  $ret.start(function(cookieManager) {
-    this.$.cookieManager= cookieManager || new CookieManager();
+  $ret.start(function(options) {
+    options || (options = {});
+    this.$.cookieManager= new CookieManager(options.cookies);
   });
 
   $ret("agent", function() { return "" });
@@ -343,11 +344,12 @@ browser.prototype.browse = function() {
         referer : this.$.referer,
         debug   : this.$.debug
       });
-      $jb.exec(this.$.cookieManager, this.cb);
+      $jb.exec({cookies: this.$.cookieManager.domains}, this.cb);
       this.noreferer = options.noreferer;
     }
     else $b.redirectCount = 0;
 
+    out.cookies = this.$.cookieManager.domains;
     return Junjo.multi(err, out);
   })
   .errout()

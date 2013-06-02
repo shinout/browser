@@ -1,8 +1,8 @@
 var u2r   = require('u2r'),
     parse = require('url').parse;
 
-function CookieManager() {
-  this.domains = {};
+function CookieManager(domains) {
+  this.domains = domains || {};
 }
 
 CookieManager.prototype.set = function(url, cookies) {
@@ -40,7 +40,10 @@ CookieManager.prototype.get = function(url) {
   var vals = canditates.reduce(function(sofar, cookieInfo) {
     if (cookieInfo.HttpOnly && !isHTTP) return sofar;
     if (cookieInfo.Secure && !isSecure) return sofar;
-    if (cookieInfo.Expires && cookieInfo.Expires.getTime() < time) return sofar;
+    if (cookieInfo.Expires) {
+      if (typeof cookieInfo.Expires == "string") cookieInfo.Expires = new Date(cookieInfo.Expires);
+      if (cookieInfo.Expires.getTime() < time) return sofar;
+    }
     if (cookieInfo.Path && path.indexOf(cookieInfo.Path) != 0) return sofar;
     sofar[cookieInfo.key] = cookieInfo.value;
     return sofar;

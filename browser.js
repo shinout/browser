@@ -226,12 +226,13 @@ browser.prototype.submit = function() {
       if (!out.url) throw new Error('No domain is specified in form ', selector);
       url = u2r(out.url).host + url;
     }
+    console.log(url, $form.attr("action"))
     delete options.to, options.selector;
 
     $form.find("input").each(function(k, el) {
       var $el = $(el);
       var name = $el.attr("name"), type = $el.attr("type"), val = $el.attr("value");
-      if (type == "hidden" || type == "submit") {
+      if (name && (type == "hidden" || type == "submit")) {
         if (options.data[name] === undefined) options.data[name] = val;
       }
     });
